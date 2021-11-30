@@ -66,11 +66,13 @@ void loop()
       //top bottom
     case 3877175040:
       Foward();
-      //Stop();
+      delay(500);
+      Stop();
       break;
     case 2907897600:
       Backward();
-      //Stop();
+      delay(500);
+      Stop();
       break;
       //left right
     case 4144561920:
