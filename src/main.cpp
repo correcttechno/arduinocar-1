@@ -4,11 +4,11 @@
 
 /*
   ir sensor signal
-  top:6375
-  bottom:19125
-  left:4335
-  right:23205
-
+  top:3877175040
+  bottom:2907897600
+  left:4144561920
+  right:2774204160
+  ok: 3810328320
 */
 
 int RECV_PIN = A1;
@@ -17,85 +17,72 @@ int ServoPin = A0;
 int MotorA1 = 5;
 int MotorA2 = 6;
 
-int MotorB1 = 10;
-int MotorB2 = 11;
-
 Servo Servo1;
-IRrecv irrecv(RECV_PIN);
+
 decode_results results;
 void setup()
 {
   Serial.begin(9600);
-  irrecv.enableIRIn();
+  IrReceiver.begin(RECV_PIN, ENABLE_LED_FEEDBACK);
   Servo1.attach(ServoPin);
   Servo1.write(45);
 
   pinMode(MotorA1, OUTPUT);
   pinMode(MotorA2, OUTPUT);
-
-  pinMode(MotorB1, OUTPUT);
-  pinMode(MotorB2, OUTPUT);
 }
 
-
-int vatt=1024;
+int vatt = 180;
 void Backward()
 {
   analogWrite(MotorA1, vatt);
-  digitalWrite(MotorA2, 0);
-  analogWrite(MotorB1, vatt);
-  digitalWrite(MotorB2, 0);
+  analogWrite(MotorA2, 0);
 }
 
 void Foward()
 {
-  digitalWrite(MotorA1, 0);
+  analogWrite(MotorA1, 0);
   analogWrite(MotorA2, vatt);
-  digitalWrite(MotorB1, 0);
-  analogWrite(MotorB2, vatt);
+ 
 }
 
 void Stop()
 {
-  digitalWrite(MotorA1, 0);
-  digitalWrite(MotorA2, 0);
-  digitalWrite(MotorB1, 0);
-  digitalWrite(MotorB2, 0);
+  analogWrite(MotorA1, 0);
+  analogWrite(MotorA2, 0);
+ 
 }
-
 
 int deg = 45;
 void loop()
 {
-  if (irrecv.decode(&results))
+  if (IrReceiver.decode())
   {
-    int value = results.value;
-    Serial.println(value);
-    
+    Serial.println(IrReceiver.decodedIRData.decodedRawData);
+
+    uint32_t value = IrReceiver.decodedIRData.decodedRawData;
+
     switch (value)
     {
       //top bottom
-    case 6375:
+    case 3877175040:
       Foward();
-      delay(200);
-      Stop();
+      //Stop();
       break;
-    case 19125:
+    case 2907897600:
       Backward();
-      delay(200);
-      Stop();
+      //Stop();
       break;
       //left right
-    case 4335:
-      for (int degree = deg; degree <= 90; degree++)
+    case 4144561920:
+      for (int degree = deg; degree <= 80; degree++)
       {
         Servo1.write(degree);
         delay(10);
       }
       deg = 90;
       break;
-    case 23205:
-      for (int degree = deg; degree >= 0; degree--)
+    case 2774204160:
+      for (int degree = deg; degree >= 10; degree--)
       {
         Servo1.write(degree);
         delay(10);
@@ -103,14 +90,19 @@ void loop()
       deg = 0;
       break;
       //ok signal
-    case 14535:
+    case 3810328320:
+      
       Servo1.write(45);
       deg = 45;
+
+      break;
+    case 3860463360:
+      Stop();
+    break;
+    default:
       break;
     }
-
-   
   }
-  irrecv.resume();
+  IrReceiver.resume();
+  delay(100);
 }
-
