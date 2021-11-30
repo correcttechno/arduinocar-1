@@ -14,8 +14,8 @@
 int RECV_PIN = A1;
 int ServoPin = A0;
 
-int MotorA1 = 8;
-int MotorA2 = 9;
+int MotorA1 = 5;
+int MotorA2 = 6;
 
 int MotorB1 = 10;
 int MotorB2 = 11;
@@ -38,21 +38,21 @@ void setup()
 }
 
 
-
+int vatt=1024;
 void Backward()
 {
-  digitalWrite(MotorA1, 1);
+  analogWrite(MotorA1, vatt);
   digitalWrite(MotorA2, 0);
-  digitalWrite(MotorB1, 1);
+  analogWrite(MotorB1, vatt);
   digitalWrite(MotorB2, 0);
 }
 
 void Foward()
 {
   digitalWrite(MotorA1, 0);
-  digitalWrite(MotorA2, 1);
+  analogWrite(MotorA2, vatt);
   digitalWrite(MotorB1, 0);
-  digitalWrite(MotorB2, 1);
+  analogWrite(MotorB2, vatt);
 }
 
 void Stop()
@@ -71,7 +71,7 @@ void loop()
   {
     int value = results.value;
     Serial.println(value);
-
+    
     switch (value)
     {
       //top bottom
@@ -109,7 +109,8 @@ void loop()
       break;
     }
 
-    irrecv.resume();
+   
   }
+  irrecv.resume();
 }
 
