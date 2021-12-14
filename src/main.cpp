@@ -1,69 +1,105 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
+#define BTN1 5
+#define BTN2 6
+#define BTN3 7
+
+#define LED_RED 9
+#define LED_GREEN 8
+
 SoftwareSerial mySerial(2, 3); // RX, TX
 void setup()
 {
-  mySerial.begin(9600);
-  Serial.begin(9600);
-  pinMode(A0,INPUT);
-  pinMode(A1,INPUT);
-  pinMode(A2,INPUT);
+    mySerial.begin(9600);
+    Serial.begin(9600);
+    pinMode(A0, INPUT);
+    pinMode(A1, INPUT);
+    pinMode(BTN1, INPUT);
+    pinMode(BTN2, INPUT);
+    pinMode(BTN3, INPUT);
+
+    pinMode(LED_RED, OUTPUT);
+    pinMode(LED_GREEN, OUTPUT);
+
+    digitalWrite(LED_RED, 1);
 }
 
-int qdeg=0;
-int gdeg=0;
-int edeg=0;
-bool elstatus=false;
+int qdeg = 0;
+int gdeg = 0;
+int edeg = 0;
+bool elstatus = false;
+
+bool drive_mode = true;
 void loop()
-{   
-    int qol=analogRead(A0);
-    int govde=analogRead(A1);
-    int el=digitalRead(A2);
+{
+    int x_axis = analogRead(A0);
+    int y_axis = analogRead(A1);
+    
 
-    qol=map(qol,0,1023,70,170);
-    govde=map(govde,0,1023,30,160);
 
-    if(abs(qol-qdeg)>2){
-        mySerial.print("qol:"+String(qol));
-        qdeg=qol;
-        delay(200);
-    }
+    //robot qol
+    if (drive_mode == false)
+    {
+        int qol = map(x_axis, 0, 1023, 70, 170);
+        int govde = map(y_axis, 0, 1023, 30, 160);
 
-    if(abs(govde-qdeg)>2){
-        mySerial.print("govde:"+String(govde));
-        gdeg=govde;
-        delay(200);
-    }
-
-    if(el!=edeg){
-        edeg=el;
-        if(elstatus==false){
-            elstatus=true;
-        }
-        else{
-            elstatus=false;
+        if (abs(qol - qdeg) > 2)
+        {
+            mySerial.print("qol:" + String(qol));
+            qdeg = qol;
+            delay(100);
         }
 
-        if(elstatus==false){
+        if (abs(govde - gdeg) > 2)
+        {
+            mySerial.print("govde:" + String(govde));
+           
+            gdeg = govde;
+            delay(100);
+        }
+
+        if(digitalRead(BTN1)==0){
             mySerial.print("el:0");
         }
-        else{
-            mySerial.print("el:150");
+        else if(digitalRead(BTN2)==0){
+            mySerial.print("el:160");
         }
-        
+
+        Serial.println("Command for robot hand");
+       
+    }
+    //masin modu
+    else{
+        int sukan = map(x_axis, 0, 1023, 0, 90);
+        mySerial.print("sukan:"+String(sukan));
+        Serial.println("Command for car");
         delay(200);
     }
-   
 
-   /*  Serial.println("Qol:");
-    Serial.println(qol);
+    if (digitalRead(BTN3) == 0)
+    {
+        if (drive_mode == true)
+        {
+            drive_mode = false;
+        }
+        else
+        {
+            drive_mode = true;
+        }
 
-    Serial.println("Govde:");
-    Serial.println(govde);
+        if (drive_mode == true)
+        {
+            digitalWrite(LED_RED, 1);
+            digitalWrite(LED_GREEN, 0);
+        }
+        else
+        {
+            digitalWrite(LED_RED, 0);
+            digitalWrite(LED_GREEN, 1);
+        }
+        delay(200);
+    }
 
-    Serial.println("El:");
-    Serial.println(el); */
     delay(100);
-    
 }
