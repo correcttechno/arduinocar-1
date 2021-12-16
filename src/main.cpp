@@ -128,7 +128,7 @@ void loop()
           rotatePlus(GovdePin,d);
       }
       if(mydata.indexOf("sukan:")!=-1){
-          rotatePlus(SukanPin,d);
+          rotatePlus(SukanPin,abs(90-d));
       }
 
 
