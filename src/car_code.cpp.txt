@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <IRremote.h>
 #include <Servo.h>
 #include <SoftwareSerial.h>
 /*
@@ -21,15 +20,13 @@ int MotorA1 = 5;
 int MotorA2 = 6;
 
 Servo myServo;
-decode_results results;
 
 SoftwareSerial mySerial(2, 3); // RX, TX
 void setup()
 {
   mySerial.begin(9600);
   Serial.begin(9600);
-  IrReceiver.begin(RECV_PIN, ENABLE_LED_FEEDBACK);
-  
+
 
   pinMode(MotorA1, OUTPUT);
   pinMode(MotorA2, OUTPUT);
@@ -69,13 +66,14 @@ void rotatePlus(int s, int deg)
 {
 
   myServo.attach(s);
+ 
 
   if (myServo.read() > deg)
   {
     for (int i = myServo.read(); i >= deg; i--)
     {
       myServo.write(i);
-      delay(10);
+      delay(4);
     }
   }
   else
@@ -83,16 +81,18 @@ void rotatePlus(int s, int deg)
     for (int i = myServo.read(); i <= deg; i++)
     {
       myServo.write(i);
-      delay(10);
+      delay(4);
     }
   }
 
+  delay(200);  
   myServo.detach();
 }
 
 void loop()
 {
 
+  
   String mydata = "";
   String integer = "";
   int n = 0;
@@ -101,7 +101,7 @@ void loop()
     n++;
     char d = mySerial.read();
     mydata += d;
-    delay(10);
+    delay(2);
   }
 
   if (mydata != "")
@@ -131,9 +131,26 @@ void loop()
           rotatePlus(SukanPin,d);
       }
 
-      Serial.println(d);
+
+      if(mydata.indexOf("ireli:")!=-1){
+          Foward();
+          delay(250);
+           Stop();
+      }
+      else if(mydata.indexOf("geri:")!=-1){
+          Backward();
+          delay(250);
+          Stop();
+      }
+     
+
+      Serial.println(mydata);
       
     }
+    else{
+        Stop();
+    }
+
   }
   /*  for (int pos = 0; pos <= 150; pos += 1) { // goes from 0 degrees to 180 degrees
      // in steps of 1 degree
@@ -145,5 +162,4 @@ void loop()
      delay(15);                       // waits 15ms for the servo to reach the position
    } */
 
- 
 }

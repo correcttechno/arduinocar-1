@@ -1,105 +1,165 @@
 #include <Arduino.h>
+#include <Servo.h>
 #include <SoftwareSerial.h>
+/*
+  ir sensor signal
+  top:3877175040
+  bottom:2907897600
+  left:4144561920
+  right:2774204160
+  ok: 3810328320
+*/
 
-#define BTN1 5
-#define BTN2 6
-#define BTN3 7
+int RECV_PIN = A0;
+int SukanPin = 8;
+int ElPin = 11;
+int GovdePin = 9;
+int QolPin = 10;
 
-#define LED_RED 9
-#define LED_GREEN 8
+int MotorA1 = 5;
+int MotorA2 = 6;
+
+Servo myServo;
 
 SoftwareSerial mySerial(2, 3); // RX, TX
 void setup()
 {
-    mySerial.begin(9600);
-    Serial.begin(9600);
-    pinMode(A0, INPUT);
-    pinMode(A1, INPUT);
-    pinMode(BTN1, INPUT);
-    pinMode(BTN2, INPUT);
-    pinMode(BTN3, INPUT);
+  mySerial.begin(9600);
+  Serial.begin(9600);
 
-    pinMode(LED_RED, OUTPUT);
-    pinMode(LED_GREEN, OUTPUT);
 
-    digitalWrite(LED_RED, 1);
+  pinMode(MotorA1, OUTPUT);
+  pinMode(MotorA2, OUTPUT);
+
+  
+  pinMode(GovdePin, OUTPUT);
+  pinMode(QolPin, OUTPUT);
+  pinMode(ElPin, OUTPUT);
+  pinMode(QolPin, OUTPUT);
 }
 
-int qdeg = 0;
-int gdeg = 0;
-int edeg = 0;
-bool elstatus = false;
+int vatt = 180;
+void Backward()
+{
+  analogWrite(MotorA1, vatt);
+  analogWrite(MotorA2, 0);
+}
 
-bool drive_mode = true;
+void Foward()
+{
+  analogWrite(MotorA1, 0);
+  analogWrite(MotorA2, vatt);
+}
+
+void Stop()
+{
+  analogWrite(MotorA1, 0);
+  analogWrite(MotorA2, 0);
+}
+
+int deg = 45;
+
+int Qoldeg = 0;
+int Govdedeg = 0;
+
+void rotatePlus(int s, int deg)
+{
+
+  myServo.attach(s);
+ 
+
+  if (myServo.read() > deg)
+  {
+    for (int i = myServo.read(); i >= deg; i--)
+    {
+      myServo.write(i);
+      delay(4);
+    }
+  }
+  else
+  {
+    for (int i = myServo.read(); i <= deg; i++)
+    {
+      myServo.write(i);
+      delay(4);
+    }
+  }
+
+  delay(200);  
+  myServo.detach();
+}
+
 void loop()
 {
-    int x_axis = analogRead(A0);
-    int y_axis = analogRead(A1);
-    
 
+  
+  String mydata = "";
+  String integer = "";
+  int n = 0;
+  while (mySerial.available())
+  {
+    n++;
+    char d = mySerial.read();
+    mydata += d;
+    delay(2);
+  }
 
-    //robot qol
-    if (drive_mode == false)
+  if (mydata != "")
+  {
+    if (mydata.indexOf("Data:") != -1)
     {
-        int qol = map(x_axis, 0, 1023, 70, 170);
-        int govde = map(y_axis, 0, 1023, 30, 160);
+      mydata.replace(" ","");
+      int index = mydata.lastIndexOf(":");
+      String deger = "";
+      for (int i = index + 1; i < mydata.length(); i++)
+      {
+        deger += mydata[i];
+      }
+      int d=deger.toInt();
+      
 
-        if (abs(qol - qdeg) > 2)
-        {
-            mySerial.print("qol:" + String(qol));
-            qdeg = qol;
-            delay(100);
-        }
+      if(mydata.indexOf("el:")!=-1){
+          rotatePlus(ElPin,d);
+      }
+      if(mydata.indexOf("qol:")!=-1){
+          rotatePlus(QolPin,d);
+      }
+      if(mydata.indexOf("govde:")!=-1){
+          rotatePlus(GovdePin,d);
+      }
+      if(mydata.indexOf("sukan:")!=-1){
+          rotatePlus(SukanPin,d);
+      }
 
-        if (abs(govde - gdeg) > 2)
-        {
-            mySerial.print("govde:" + String(govde));
-           
-            gdeg = govde;
-            delay(100);
-        }
 
-        if(digitalRead(BTN1)==0){
-            mySerial.print("el:0");
-        }
-        else if(digitalRead(BTN2)==0){
-            mySerial.print("el:160");
-        }
+      if(mydata.indexOf("ireli:")!=-1){
+          Foward();
+          delay(250);
+           Stop();
+      }
+      else if(mydata.indexOf("geri:")!=-1){
+          Backward();
+          delay(250);
+          Stop();
+      }
+     
 
-        Serial.println("Command for robot hand");
-       
+      Serial.println(mydata);
+      
     }
-    //masin modu
     else{
-        int sukan = map(x_axis, 0, 1023, 0, 90);
-        mySerial.print("sukan:"+String(sukan));
-        Serial.println("Command for car");
-        delay(200);
+        Stop();
     }
 
-    if (digitalRead(BTN3) == 0)
-    {
-        if (drive_mode == true)
-        {
-            drive_mode = false;
-        }
-        else
-        {
-            drive_mode = true;
-        }
+  }
+  /*  for (int pos = 0; pos <= 150; pos += 1) { // goes from 0 degrees to 180 degrees
+     // in steps of 1 degree
+     El.write(pos);              // tell servo to go to position in variable 'pos'
+     delay(15);                       // waits 15ms for the servo to reach the position
+   }
+   for (int pos = 150; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+     El.write(pos);              // tell servo to go to position in variable 'pos'
+     delay(15);                       // waits 15ms for the servo to reach the position
+   } */
 
-        if (drive_mode == true)
-        {
-            digitalWrite(LED_RED, 1);
-            digitalWrite(LED_GREEN, 0);
-        }
-        else
-        {
-            digitalWrite(LED_RED, 0);
-            digitalWrite(LED_GREEN, 1);
-        }
-        delay(200);
-    }
-
-    delay(100);
 }
